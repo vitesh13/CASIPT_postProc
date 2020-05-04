@@ -111,20 +111,24 @@ with open(options.casipt[0],'r') as f:
 
 hdf_file = h5py.File(options.filenames[0],'a') 
 
+rho_CA = np.loadtxt('resMDRX._rho.txt')
+for i in range(np.array(hdf_file['/constituent/1_omega_plastic']).shape[1]):
+  hdf_file['/constituent/1_omega_plastic'][:,i] = rho_CA/48   # for BCC till 48, but for fcc till 24 only 
+
 for i,line in enumerate(data):
   index = int(line.split()[1])
-#  hdf_file['/PlasticPhases/ 1 _convergedStateConst'][index,0:48] = 1E12
-# in the code F = Fp.Fe 
-  Fp = np.array(hdf_file['convergedFp'][index]).reshape((3,3))
-  F  = np.array(hdf_file['convergedF'][index]).reshape((3,3))
+  hdf_file['/constituent/1_omega_plastic'][index,0:48] = 1E12  # for BCC till 48, but for fcc till 24 only
+# in the code F = Fe.Fp 
+  Fp = np.array(hdf_file['Fp'][index]).reshape((3,3))
+  F  = np.array(hdf_file['F'][index]).reshape((3,3))
   Fe = findFe_initial(F.T,Fp.T) # because restart file stores deformation gradients as transposed form 
   d = Decompose(Fe)
   R = d.math_rotationalPart33(Fe)  #rotational part of Fe = RU
   # to enable gradual change in F
   # -----------------------------
-  #orig_eulers = om2eu(R.transpose())   #in radians O_m = R.transpose()
-  ##orig_eulers = orig_eulers*math.pi/180.0
-  #print('original euler:',orig_eulers) 
+  orig_eulers = om2eu(R.transpose())   #in radians O_m = R.transpose()
+  #orig_eulers = orig_eulers*math.pi/180.0
+  print('original euler:',orig_eulers,'index:',index) 
   # -----------------------------
   stretch = np.matmul(np.linalg.inv(R),Fe)
   eulers = np.array([float(line.split()[5]),float(line.split()[7]),float(line.split()[9])])
@@ -139,7 +143,7 @@ for i,line in enumerate(data):
   Fe_new       = np.matmul(rotation_new,stretch)
   Fp_new       = np.matmul(F,np.linalg.inv(Fe_new))
   Fp_new       = Fp_new.T           # because restart file stores deformation gradients as transposed form
-  hdf_file['convergedFp'][index] = Fp_new.reshape((1,1,3,3))
+  hdf_file['Fp'][index] = Fp_new.reshape((1,1,3,3))
   #------SANITY CHECK---------------------------------------
 
 

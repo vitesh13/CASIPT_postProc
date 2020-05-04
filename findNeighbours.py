@@ -20,7 +20,7 @@ options = parser.parse_args()
 
 regridding_coords = np.loadtxt(options.regrid[0],skiprows=1,usecols=(0,1,2))
 remeshed_coords   = np.loadtxt(options.mesh[0],skiprows=1,usecols=(0,1,2))
-
+print('length',len(remeshed_coords))
 tree = spatial.KDTree(regridding_coords)
 
 nbr_array = tree.query(remeshed_coords,1)[1] #finding the indices of the nearest neighbour
@@ -35,40 +35,42 @@ const_values = ['C_minMaxAvg','C_volAvg','C_volAvgLastInc','F_aim','F_aimDot','F
 
 const_group = ['HomogState']
 
-diff_values = ['convergedF','convergedFi','convergedFp','convergedLi','convergedLp','convergedS',' 1 _convergedStateConst']
+diff_values = ['F','Fi','Fp','Li','Lp','S','1_omega_plastic']
 
 diff_values_1 = ['F_lastInc','F']
 
-diff_groups = ['PlasticPhases']
+diff_groups = ['constituent']
 
 for i in const_values:
-  f.create_dataset('/' + i,data=np.array(hdf['/' + i]))
+  f.create_dataset('/solver/' + i,data=np.array(hdf['/solver/' + i]))
 
-f.create_group('HomogStates')
-f.create_group('PlasticPhases')
+f.create_group('constituent')
+f.create_group('materialpoint')
 
 for i in diff_values:
-  if i != ' 1 _convergedStateConst' and i != 'F_lastInc':
+  if i != '1_omega_plastic':
     data_array = np.zeros((len(remeshed_coords),) + np.shape(hdf[i])[1:])
     for count,point in enumerate(nbr_array):
       data_array[count] = np.array(hdf[i][point])
     f[i] = data_array  
   else:
-    data_array = np.zeros((len(remeshed_coords),) + np.shape(hdf['/PlasticPhases/' + i])[1:])
+    data_array = np.zeros((len(remeshed_coords),) + np.shape(hdf['/constituent/' + i])[1:])
     for count,point in enumerate(nbr_array):
-      data_array[count] = np.array(hdf['/PlasticPhases/' + i][point])
-    f['/PlasticPhases/' + i] = data_array  
+      data_array[count] = np.array(hdf['/constituent/' + i][point])
+    f['/constituent/' + i] = data_array  
     
 for i in diff_values_1:
-    xsize      = int(np.max(remeshed_coords[:,0])/(remeshed_coords[1,0] - remeshed_coords[0,0])) + 1
-    ysize      = int(np.max(remeshed_coords[:,1])/(remeshed_coords[1,0] - remeshed_coords[0,0])) + 1
-    zsize      = int(np.max(remeshed_coords[:,2])/(remeshed_coords[1,0] - remeshed_coords[0,0])) + 1
+    xsize      = int(round(np.max(remeshed_coords[:,0])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) + 1
+    ysize      = int(round(np.max(remeshed_coords[:,1])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) + 1
+    zsize      = int(round(np.max(remeshed_coords[:,2])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) + 1
     totalsize  = int(xsize*ysize*zsize)
-    data_array = np.zeros((totalsize,) + np.shape(hdf[i])[3:])
-    input_data = np.array(hdf[i]).reshape(((np.prod(np.shape(np.array(hdf[i]))[0:3]),)+np.shape(np.array(hdf[i]))[3:]))
+    print(totalsize)
+    data_array = np.zeros((totalsize,) + np.shape(hdf['/solver/' + i])[3:])
+    input_data = np.array(hdf['/solver/' + i]).reshape(((np.prod(np.shape(np.array(hdf['/solver/' + i]))[0:3]),)+np.shape(np.array(hdf['/solver/' + i]))[3:]))
+    print(np.shape(data_array),np.shape(input_data))
     for count,point in enumerate(nbr_array):
       data_array[count] = input_data[point]
-    data_array = data_array.reshape((zsize,ysize,xsize,) + np.shape(hdf[i])[3:])
-    f[i] = data_array
+    data_array = data_array.reshape((zsize,ysize,xsize,) + np.shape(hdf['/solver/' + i])[3:])
+    f['/solver/' + i] = data_array
 
 
