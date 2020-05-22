@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: UTF-8 no BOM -*-
 
 import os,sys,math,re,time,struct
@@ -127,15 +126,15 @@ parser.add_argument('-m','--submodel', dest = 'submodel', type = float, nargs='*
 # ----------------------------------------------------------------------------
 myhelp = """
 (optional) \
-defualt: "full"
+defualt: "False"
 
 reset the deformation tensor:
-        "elastic:" keep the elastic deformation
-        "full": reset the deformation tensor to identity
+        "True:" keep the elastic deformation
+        "False": reset the deformation tensor to identity
 """
 
-parser.add_argument('-r','--reset', dest = 'reset',  metavar='string',
-                    default='full', help = myhelp)
+parser.add_argument('-e','--isElastic', dest = 'isElastic', action='store_true',
+                    default=False, help = myhelp)
 # ----------------------------------------------------------------------------
 # set inputs
 
@@ -145,11 +144,11 @@ options = parser.parse_args()
 # options.load = 'CompX.load'
 
 
-geom_name = p5.file_util.remove_fileFormat(options.geom)
-load_name = p5.file_util.remove_fileFormat(options.load)
-reset = p5.setting_util.set_reset(options.reset)
-scale = p5.setting_util.set_scale(options.scale, options.grid)
-sub_coefs = p5.setting_util.set_submodel(options.submodel)
+geom_name = rgg.setting_util.remove_fileFormat(options.geom)
+load_name = rgg.setting_util.remove_fileFormat(options.load)
+isElastic = rgg.setting_util.set_elasticDeformation(options.isElastic)
+seedScale = rgg.setting_util.set_scale4gridSeedsRegridding(options.seedScale, options.seedGrid)
+#sub_coefs = p5.setting_util.set_submodel(options.submodel)
 
 # default for material config and hdf5 restart files
 mat = 'material.config'
@@ -173,11 +172,11 @@ inc= 'last'
 
 # regriding for the inc
 rg = rgg.geom_regridder(geom_name,load_name)
-rg.set_dir(main_dir)
-rg.set_plotting(options.plot)
-rg.set_RVEscale(scale)
-grid0, size0, origin0, microstructure0_flatten, geom_comments0 = rg.read_geom()
-print(origin0)
+#rg.set_dir(main_dir)
+#rg.set_plotting(options.plot)
+#rg.set_RVEscale(scale)
+gridSeeds_0, sizeRVE_0, originRVE_0, microstructureFlatten_0, geomComments_0 = rg.read_geom()
+print(originRVE_0)
 df_cell, df_nodal = rg.make_displacements_df (inc = inc)
 rebacked_id, new_grid = rg.report_restartGeom(df_cell, df_nodal, sub_coefs)
 # # Cauchy and F
