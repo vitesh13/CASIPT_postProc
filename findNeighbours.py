@@ -64,9 +64,9 @@ for i in diff_values:
     f['/constituent/' + i] = data_array  
     
 for i in diff_values_1:
-    xsize      = int(round(np.max(remeshed_coords[:,0])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) + 1
-    ysize      = int(round(np.max(remeshed_coords[:,1])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) + 1
-    zsize      = int(round(np.max(remeshed_coords[:,2])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) + 1
+    xsize      = int(round(np.max(remeshed_coords[:,0])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) #+ 1
+    ysize      = int(round(np.max(remeshed_coords[:,1])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) #+ 1
+    zsize      = int(round(np.max(remeshed_coords[:,2])/(remeshed_coords[1,0] - remeshed_coords[0,0]))) #+ 1
     totalsize  = int(xsize*ysize*zsize)
     print(totalsize)
     data_array = np.zeros((totalsize,) + np.shape(hdf['/solver/' + i])[3:])
