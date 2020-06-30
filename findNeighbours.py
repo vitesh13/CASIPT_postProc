@@ -21,9 +21,13 @@ options = parser.parse_args()
 regridding_coords = np.loadtxt(options.regrid[0],skiprows=1,usecols=(0,1,2))
 remeshed_coords   = np.loadtxt(options.mesh[0],skiprows=1,usecols=(0,1,2))
 print('length',len(remeshed_coords))
+remeshed_coords_1      = remeshed_coords 
+remeshed_coords_1[:,0] = remeshed_coords[:,0] + remeshed_coords[1,0] - remeshed_coords[0,0]
+remeshed_coords_1[:,1] = remeshed_coords[:,1] + remeshed_coords[1,0] - remeshed_coords[0,0]
+remeshed_coords_1[:,2] = remeshed_coords[:,2] + remeshed_coords[1,0] - remeshed_coords[0,0] #this works only if it is equidistant in all directions
 tree = spatial.KDTree(regridding_coords)
 
-nbr_array = tree.query(remeshed_coords,1)[1] #finding the indices of the nearest neighbour
+nbr_array = tree.query(remeshed_coords_1,1)[1] #finding the indices of the nearest neighbour
 
 file_name = os.path.splitext(options.hdf[0])[0] + '_CA.hdf5'
 
